@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import cardBack from "./assets/cardBack.svg";
 import "@fontsource-variable/onest";
+import cardClickSound from "./assets/card-flip-sound.mp3";
 
 // Function to shuffle an array in place
 const shuffleArray = (array) => {
@@ -19,6 +20,7 @@ export default function App() {
   const [matchedPairs, setMatchedPairs] = useState([]);
   const [playerName, setPlayerName] = useState("");
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const cardClickAudio = new Audio(cardClickSound);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,7 +63,7 @@ export default function App() {
     }
   };
 
-  if (!isGameStarted) {
+  if (isGameStarted) {
     // Display input form to get player's name
     return (
       <div className="flex flex-col justify-center h-screen">
@@ -113,6 +115,9 @@ export default function App() {
       return; // Ignore clicks on already selected cards, more than two selected cards, or matched pairs
     }
 
+    // Play the card click sound
+    cardClickAudio.play();
+
     setSelectedCards((prevSelected) => [...prevSelected, key]);
 
     // Check for a match when two cards are selected
@@ -134,7 +139,7 @@ export default function App() {
       // Clear the selected cards after checking for a match
       setTimeout(() => {
         setSelectedCards([]);
-      }, 1000); // timeout based on UI interaction needs
+      }, 1000); // timeout based on UI interaction
     }
   };
 
@@ -160,7 +165,7 @@ export default function App() {
             </h1>
           </div>
         )}
-        <div className="flex flex-col items-center gap-y-4">
+        <div className="flex flex-col items-center gap-y-6">
           <div className="flex flex-col gap-y-4 text-3xl md:text-right w-fit">
             <p className="px-2 py-1 bg-blue-400/30 rounded-md">
               Matches: <span className="">{matchCount}</span>
@@ -171,36 +176,35 @@ export default function App() {
           </div>
           <ul className="grid lg:grid-cols-5 sm:grid-cols-3 grid-cols-2 justify-items-center gap-4">
             {cards.map((item) => (
-              <div key={item.key} className="size-full">
-                <li
-                  onClick={() => {
-                    handleCardClick(item.key);
-                    handleGameCompletion();
-                  }}
-                  className={`sm:size-44 size-32 rounded-xl shadow-lg transform transition-all duration-500 cursor-pointer hover:shadow-2xl ${
+              <li
+                onClick={() => {
+                  handleCardClick(item.key);
+                  handleGameCompletion();
+                }}
+                key={item.key}
+                className={`sm:size-44 size-32 rounded-xl shadow-lg transform transition-all duration-500 cursor-pointer hover:shadow-2xl ${
+                  matchedPairs.includes(item.key) ||
+                  selectedCards.includes(item.key)
+                    ? "flipped"
+                    : ""
+                }`}
+              >
+                <img
+                  className="size-full rounded-xl shadow-xl"
+                  src={
                     matchedPairs.includes(item.key) ||
                     selectedCards.includes(item.key)
-                      ? "flipped"
-                      : ""
-                  }`}
-                >
-                  <img
-                    className="size-full rounded-xl shadow-xl"
-                    src={
-                      matchedPairs.includes(item.key) ||
-                      selectedCards.includes(item.key)
-                        ? item.fields.image.url
-                        : cardBack
-                    }
-                    alt={
-                      matchedPairs.includes(item.key) ||
-                      selectedCards.includes(item.key)
-                        ? item.fields.image.title
-                        : "Card Back"
-                    }
-                  />
-                </li>
-              </div>
+                      ? item.fields.image.url
+                      : cardBack
+                  }
+                  alt={
+                    matchedPairs.includes(item.key) ||
+                    selectedCards.includes(item.key)
+                      ? item.fields.image.title
+                      : "Card Back"
+                  }
+                />
+              </li>
             ))}
           </ul>
         </div>
