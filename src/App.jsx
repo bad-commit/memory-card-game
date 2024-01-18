@@ -63,7 +63,7 @@ export default function App() {
     }
   };
 
-  if (isGameStarted) {
+  if (!isGameStarted) {
     // Display input form to get player's name
     return (
       <div className="flex flex-col justify-center h-screen">
