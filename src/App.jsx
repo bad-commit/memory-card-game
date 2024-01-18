@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import cardBack from "./assets/cardBack.svg";
+import "@fontsource-variable/onest";
 
 // Function to shuffle an array in place
 const shuffleArray = (array) => {
@@ -11,12 +12,13 @@ const shuffleArray = (array) => {
 };
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
   const [cards, setCards] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [matchCount, setMatchCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [matchedPairs, setMatchedPairs] = useState([]);
+  const [playerName, setPlayerName] = useState("");
+  const [isGameStarted, setIsGameStarted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +27,6 @@ export default function App() {
           "https://fed-team.modyo.cloud/api/content/spaces/animals/types/game/entries?per_page=20"
         );
         const result = await response.json();
-        setIsLoading(false);
 
         // Duplicate the array and add a suffix to the key
         const duplicatedCards = result.entries.flatMap((item) => [
@@ -46,6 +47,61 @@ export default function App() {
     };
     fetchData();
   }, []);
+
+  const handleStartGame = (name) => {
+    setPlayerName(name);
+    setIsGameStarted(true);
+  };
+
+  const handleGameCompletion = () => {
+    // Logic to check if all cards are matched
+    if (matchCount === 20) {
+      // Display congratulations message
+      alert(`You've already completed the game.`);
+    }
+  };
+
+  if (!isGameStarted) {
+    // Display input form to get player's name
+    return (
+      <div className="flex flex-col justify-center h-screen">
+        <h1 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 text-4xl pb-8">
+          Welcome to the Memory Card Game!
+        </h1>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const name = e.target.elements.playerName.value;
+            handleStartGame(name);
+          }}
+        >
+          <div className="flex flex-col items-center gap-y-8">
+            <div className="flex gap-x-2">
+              <label className="text-xl" htmlFor="playerName">
+                Please enter your name 😊:{" "}
+              </label>
+              <input
+                className="w-fit shadow-lg rounded-sm"
+                type="text"
+                id="playerName"
+                onInvalid={(e) =>
+                  e.target.setCustomValidity("You must enter your name 😅")
+                }
+                onInput={(e) => e.target.setCustomValidity("")}
+                required
+              />
+            </div>
+            <button
+              className="px-2 py-1 ring-1 ring-blue-400 rounded-sm text-xl hover:bg-blue-400 hover:text-white transition-all w-fit"
+              type="submit"
+            >
+              Start Game
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   const handleCardClick = (key) => {
     // Check if the clicked card is already selected
@@ -73,11 +129,6 @@ export default function App() {
       } else {
         // It's an error
         setErrorCount((prevCount) => prevCount + 1);
-
-        // // Clear the selected cards after a brief delay
-        // setTimeout(() => {
-        //   setSelectedCards([]);
-        // }, 1000);
       }
 
       // Clear the selected cards after checking for a match
@@ -87,44 +138,69 @@ export default function App() {
     }
   };
 
-  if (isLoading) {
-    // If it's loading, show this
-    return (
-      <div className="App">
-        <h1>Cargando...</h1>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="container mx-auto">
-        <h1 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 text-4xl pb-8">
-          Memory
+      <div className="container mx-auto p-4">
+        <h1 className="text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500 text-5xl pb-8">
+          Memory Card Game
         </h1>
-        <div className="flex justify-center">
-          <div className="text-3xl text-right">
-            <p>Matches: {matchCount}</p>
-            <p>Errors: {errorCount}</p>
+        <div className="text-lg">
+          <span>Rules:</span>
+          <p>
+            The rules are simple, just flip the cards until you find two
+            identical! then just keep it up until you flip all the cards. <br />
+            Easy peasy 👌
+          </p>
+          <span>Good luck!</span>
+        </div>
+        {matchCount === 20 && (
+          <div className="pb-4">
+            <h1 className="!leading-[1.5] md:text-4xl text-2xl text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+              Congratulations, {playerName}! Youve completed the game.
+            </h1>
           </div>
-          <ul className="grid lg:grid-cols-5 md:grid-cols-3 justify-items-center gap-4 w-4/5">
+        )}
+        <div className="flex flex-col items-center gap-y-4">
+          <div className="flex flex-col gap-y-4 text-3xl md:text-right w-fit">
+            <p className="px-2 py-1 bg-blue-400/30 rounded-md">
+              Matches: <span className="">{matchCount}</span>
+            </p>
+            <p className="px-2 py-1 bg-blue-400/30 rounded-md">
+              Errors: <span className="">{errorCount}</span>
+            </p>
+          </div>
+          <ul className="grid lg:grid-cols-5 sm:grid-cols-3 grid-cols-2 justify-items-center gap-4">
             {cards.map((item) => (
-              <li
-                key={item.key}
-                onClick={() => handleCardClick(item.key)}
-                className="size-52"
-              >
-                {matchedPairs.includes(item.key) ||
-                selectedCards.includes(item.key) ? (
+              <div key={item.key} className="size-full">
+                <li
+                  onClick={() => {
+                    handleCardClick(item.key);
+                    handleGameCompletion();
+                  }}
+                  className={`sm:size-44 size-32 rounded-xl shadow-lg transform transition-all duration-500 cursor-pointer hover:shadow-2xl ${
+                    matchedPairs.includes(item.key) ||
+                    selectedCards.includes(item.key)
+                      ? "flipped"
+                      : ""
+                  }`}
+                >
                   <img
-                    className="size-full"
-                    src={item.fields.image.url}
-                    alt={item.fields.image.title}
+                    className="size-full rounded-xl shadow-xl"
+                    src={
+                      matchedPairs.includes(item.key) ||
+                      selectedCards.includes(item.key)
+                        ? item.fields.image.url
+                        : cardBack
+                    }
+                    alt={
+                      matchedPairs.includes(item.key) ||
+                      selectedCards.includes(item.key)
+                        ? item.fields.image.title
+                        : "Card Back"
+                    }
                   />
-                ) : (
-                  <img className="size-full" src={cardBack} alt="Card Back" />
-                )}
-              </li>
+                </li>
+              </div>
             ))}
           </ul>
         </div>
